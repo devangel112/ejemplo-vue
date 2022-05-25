@@ -1,16 +1,14 @@
 <template>
   <div class="caja">
-    <!-- 
-            Metodo GET
-
+    <!-- Metodo GET 
     <h1>Lista de compras</h1>
     <ul>
       <li v-for="item in items" :key="item.id">
         {{ item.name }}
       </li>
-    </ul> -->
+    </ul>-->
 
-    <div class="items">
+    <div class="items" id="itemList">
       <h1>Lista de compras</h1>
       <div class="addItemBox">
         <input v-model="itemName" placeholder="Nombre" type="text" />
@@ -29,19 +27,21 @@
           <span>{{ item.name }}</span>
           <span>${{ item.price }}</span>
           <div class="actions">
-            <button class="edit-button" @click="editItem(item.id)">Editar</button>
+            <!-- <button class="edit-button" @click="editItem(item.id)">Editar</button> -->
+            <button class="edit-button" @click="hideList(item.id)">Editar</button>
             <button class="delete-button" @click="removeItem(item.id)">Eliminar</button>
           </div>
         </li>
       </ul>
     </div>
-    <div class="editBox">
+    <div class="editBox" id="editItem">
       <h1>Editar producto</h1>
       <div class="editItemBox">
         <input v-model="selectedItemName" placeholder="Nombre" type="text" />
         <input v-model="selectedItemPrice" placeholder="Precio" type="text" />
+        <button class="edit-button" @click="editItem(selectedItemID)">Editar</button>
       </div>
-  </div>
+    </div>
 </div>
 </template>
 
@@ -55,6 +55,7 @@ export default {
       selectedItem: [],
       selectedItemName: "",
       selectedItemPrice: null,
+      selectedItemID: null,
       itemName: "",
       itemPrice: null,
     };
@@ -69,29 +70,67 @@ export default {
   },
   methods: {
     async addItem() {
-      const res = await axios.post(`http://localhost:3000/items`, {
-        name: this.itemName,
-        price: this.itemPrice,
-      })
-      this.items = [...this.items, res.data];
-      this.itemName = "";
-      this.itemPrice = "";
+      try {
+        const res = await axios.post(`http://localhost:3000/items`, {
+          name: this.itemName,
+          price: this.itemPrice,
+        })
+        this.items = [...this.items, res.data];
+        this.itemName = "";
+        this.itemPrice = "";
+      } catch (error) {
+        console.log(error)
+      }
     },
     removeItem(id) {
-      axios.delete(`http://localhost:3000/items/${id}`)
-      this.items = this.items.filter(item => item.id !== id)
+      try {
+        axios.delete(`http://localhost:3000/items/${id}`)
+        this.items = this.items.filter(item => item.id !== id)
+      } catch (error) {
+        console.log(error)
+      }
     },
     async editItem(id) {
-      await axios.patch(`http://localhost:3000/items/${id}`, {
-        name: this.selectedItemName,
-        price: this.selectedItemPrice,
-      })
-      this.selectedItemName = "";
-      this.selectedItemPrice = "";
+      try {
+        await axios.patch(`http://localhost:3000/items/${id}`, {
+          name: this.selectedItemName,
+          price: this.selectedItemPrice,
+        })
+        this.selectedItemName = "";
+        this.selectedItemPrice = "";
+        const res = await axios.get(`http://localhost:3000/items`)
+        this.items = res.data;
+        this.showList()
+      } catch (error) {
+        console.log(error)
+      }
     },
     async getItem(id) {
-      const res = await axios.get(`http://localhost:3000/items/${id}`)
-      console.log(res.data)
+      try {
+        const res = await axios.get(`http://localhost:3000/items/${id}`)
+        this.selectedItemName = res.data.name
+        this.selectedItemPrice = res.data.price
+        this.selectedItemID = id
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    hideList(id) {
+      try {
+        this.getItem(id)
+        const itemList = document.getElementById("itemList")
+        itemList.style.display = "none"
+        const editItem = document.getElementById("editItem")
+        editItem.style.display = "block"
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    showList() {
+      const itemList = document.getElementById("itemList")
+      itemList.style.display = "block"
+      const editItem = document.getElementById("editItem")
+      editItem.style.display = "none"
     }
   }
 };
@@ -145,6 +184,15 @@ button {
   align-content: space-evenly;
   align-items: center;
 }
+.editItemBox {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  justify-content: space-evenly;
+  justify-items: center;
+  align-content: space-evenly;
+  align-items: center;
+}
 .caja ul {
     list-style: none;
     padding-left: 0;
@@ -165,5 +213,8 @@ button {
 }
 button {
   padding: 2px 8px;
+}
+#editItem {
+  display: none;
 }
 </style>
