@@ -1,6 +1,6 @@
 <template>
   <div>
-      <Home message="Hola, enviando un mensaje desde template" />
+      <Home />
   </div>
 </template>
 
